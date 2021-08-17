@@ -444,7 +444,7 @@ COPY --from=icyque-build /usr/lib/purple-2/libicyque.so /tmp/usr/lib/purple-2/li
 COPY --from=icyque-build /tmp/status /tmp/plugin/icyque
 
 COPY --from=wa-build /usr/lib/bitlbee/wa.so /tmp/usr/lib/bitlbee/wa.so
-COPY --from=wa-build /usr/lib/bitlbee/libwa.so /tmp/usr/lib/bitlbee/libwa.so
+COPY --from=wa-build /usr/lib/libwa.so /tmp/usr/lib/libwa.so
 COPY --from=wa-build /tmp/status /tmp/plugin/wa
 
 RUN apk add --update --no-cache findutils \
