@@ -2,6 +2,7 @@
 
 This docker image includes bitlbee with a bunch of useful plugins:
   - [facebook](https://github.com/jgeboski/bitlbee-facebook)
+  - [instagram](https://github.com/EionRobb/purple-instagram)
   - [steam](https://github.com/jgeboski/bitlbee-steam)
   - [skypeweb](https://github.com/EionRobb/skype4pidgin)
   - [telegram](https://github.com/majn/telegram-purple)

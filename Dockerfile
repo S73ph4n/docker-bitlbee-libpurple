@@ -333,6 +333,26 @@ RUN echo ICYQUE=${ICYQUE} > /tmp/status \
 
 # ---
 
+FROM bitlbee-build as instagram-build
+
+ARG INSTAGRAM=1
+ARG INSTAGRAM_VERSION=420cef4
+
+RUN echo INSTAGRAM=${INSTAGRAM} > /tmp/status \
+ && if [ ${INSTAGRAM} -eq 1 ]; \
+     then cd /tmp \
+       && git clone -n https://github.com/EionRobb/purple-instagram.git \
+       && cd purple-instagram \
+       && git checkout ${INSTAGRAM_VERSION} \
+       && make \
+       && make install \
+       && strip /usr/lib/purple-2/libinstagram.so; \
+     else mkdir -p /usr/lib/purple-2 \
+       && ln -sf /nowhere /usr/lib/purple-2/libinstagram.so; \
+    fi
+
+# ---
+
 FROM alpine:${ALPINE_VERSION} as bitlbee-plugins
 
 COPY --from=bitlbee-build /usr/sbin/bitlbee /tmp/usr/sbin/bitlbee
@@ -394,6 +414,9 @@ COPY --from=signald-build /tmp/status /tmp/plugin/signald
 
 COPY --from=icyque-build /usr/lib/purple-2/libicyque.so /tmp/usr/lib/purple-2/libicyque.so
 COPY --from=icyque-build /tmp/status /tmp/plugin/icyque
+
+COPY --from=instagram-build /usr/lib/purple-2/libinstagram.so /tmp/usr/lib/purple-2/libinstagram.so
+COPY --from=instagram-build /tmp/status /tmp/plugin/instagram
 
 RUN apk add --update --no-cache findutils \
  && find /tmp/ -type f -empty -delete \
