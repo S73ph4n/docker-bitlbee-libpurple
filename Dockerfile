@@ -353,6 +353,54 @@ RUN echo INSTAGRAM=${INSTAGRAM} > /tmp/status \
 
 # ---
 
+FROM bitlbee-build as wa-build
+ARG WHATSAPP=1
+ARG WHATSAPP_VERSION=1a26221
+
+RUN echo WHATSAPP=${WHATSAPP} > /tmp/status \
+    && if [ ${WHATSAPP} -eq 1 ]; \
+        then cd /tmp \
+                && apk add --no-cache --update \
+                json-glib \
+                protobuf-c \
+                libgcrypt \
+                libssl1.1 \
+                libcrypto1.1 \
+                libwebsockets-dev \
+                json-glib-dev \
+                json-c-dev \
+                libqrencode-dev \
+                libssl1.1 \
+                libgcrypt-dev \
+                glib-dev \
+             && apk add --no-cache --update --virtual .build-dependencies \
+                 build-base \
+                 git \
+                 make \
+                 clang \
+                 autoconf \
+                 automake \
+                 libtool \
+                 openssl-dev \
+                 protobuf-c-dev \
+             && git clone git://github.com/troydhanson/uthash.git \
+             && cp uthash/src/* /usr/include/ \
+             && cd /tmp \
+             && git clone git://github.com/ppgodel/libwa.git \
+             && cd libwa/libwa \
+             && protoc-c --c_out=. pmsg.proto \
+             && cd .. \
+             && make \
+             && make install \
+             && cd /tmp \
+             && git clone git://github.com/ppgodel/bitlbee-wa.git \
+             && cd bitlbee-wa \
+             && git checkout ${WHATSAPP_VERSION} \
+             && mkdir -p /usr/lib/bitlbee/ \
+             && make \
+             && make install; fi 
+# ---
+
 FROM alpine:${ALPINE_VERSION} as bitlbee-plugins
 
 COPY --from=bitlbee-build /usr/sbin/bitlbee /tmp/usr/sbin/bitlbee
@@ -418,6 +466,10 @@ COPY --from=icyque-build /tmp/status /tmp/plugin/icyque
 COPY --from=instagram-build /usr/lib/purple-2/libinstagram.so /tmp/usr/lib/purple-2/libinstagram.so
 COPY --from=instagram-build /tmp/status /tmp/plugin/instagram
 
+COPY --from=wa-build /usr/lib/bitlbee/wa.so /tmp/usr/lib/bitlbee/wa.so
+COPY --from=wa-build /usr/lib/libwa.so /tmp/usr/lib/libwa.so
+COPY --from=wa-build /tmp/status /tmp/plugin/wa
+
 RUN apk add --update --no-cache findutils \
  && find /tmp/ -type f -empty -delete \
  && find /tmp/ -type d -empty -delete \
@@ -448,6 +500,7 @@ RUN addgroup -g 101 -S bitlbee \
  && if [ ${SIPE} -eq 1 ]; then PKGS="${PKGS} libxml2"; fi \
  && if [ ${ROCKETCHAT} -eq 1 ]; then PKGS="${PKGS} discount"; fi \
  && if [ ${MATRIX} -eq 1 ]; then PKGS="${PKGS} sqlite http-parser"; fi \
+ && if [ ${WHATSAPP} -eq 1 ]; then PKGS="${PKGS} libwebsockets-dev libqrencode-dev libcrypto1.1 json-glib protobuf-c libgcrypt-dev"; fi \
  && apk add --no-cache --update ${PKGS} \
  && rm /plugins
 
